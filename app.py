@@ -3,6 +3,7 @@ import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 
+# Page config
 st.set_page_config(page_title="Stock Learning App", layout="wide")
 
 # --- Title ---
@@ -24,10 +25,11 @@ try:
         st.subheader(f"Stock Data for {ticker}")
         st.write(data.tail())
 
-        # --- Plot price chart with 50-day & 200-day moving averages ---
+        # --- Moving averages ---
         data['50_MA'] = data['Close'].rolling(window=50).mean()
         data['200_MA'] = data['Close'].rolling(window=200).mean()
 
+        # --- Plot price chart with moving averages ---
         st.subheader("Price Chart with Moving Averages")
         fig, ax = plt.subplots(figsize=(12,6))
         ax.plot(data.index, data['Close'], label='Close Price', color='blue')
@@ -37,7 +39,16 @@ try:
         ax.legend()
         st.pyplot(fig)
 
-        # --- Volatility (daily % change) ---
+        # --- Generate signal ---
+        last_signal = "Hold"
+        if data['50_MA'].iloc[-1] > data['200_MA'].iloc[-1]:
+            last_signal = "✅ Buy Signal"
+        elif data['50_MA'].iloc[-1] < data['200_MA'].iloc[-1]:
+            last_signal = "❌ Sell Signal"
+
+        st.subheader(f"Trading Signal for {ticker}: {last_signal}")
+
+        # --- Volatility (daily returns) ---
         st.subheader("Volatility (Daily Returns)")
         data['Daily Return'] = data['Close'].pct_change()
         fig2, ax2 = plt.subplots(figsize=(12,6))
@@ -49,3 +60,4 @@ try:
 
 except Exception as e:
     st.error(f"Error fetching data: {e}")
+
