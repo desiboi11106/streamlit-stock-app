@@ -1,63 +1,28 @@
 import streamlit as st
-import yfinance as yf
-import pandas as pd
-import matplotlib.pyplot as plt
+import random
 
-# Page config
-st.set_page_config(page_title="Stock Learning App", layout="wide")
+st.title("🎲 Guess the Number Game")
 
-# --- Title ---
-st.title("📈 Stock Learning App")
-st.write("Learn investing by exploring stocks with moving averages and volatility graphs.")
+# Generate a random number between 1 and 10
+if "number" not in st.session_state:
+    st.session_state.number = random.randint(1, 10)
+    st.session_state.guesses = 0
 
-# --- Sidebar for user input ---
-ticker = st.sidebar.text_input("Enter Stock Ticker (e.g. AAPL, TSLA, MSFT):", "AAPL")
-start_date = st.sidebar.date_input("Start Date", pd.to_datetime("2020-01-01"))
-end_date = st.sidebar.date_input("End Date", pd.to_datetime("today"))
+st.write("I'm thinking of a number between 1 and 10. Can you guess it?")
 
-# --- Download stock data ---
-try:
-    data = yf.download(ticker, start=start_date, end=end_date)
+# User input
+guess = st.number_input("Your guess:", min_value=1, max_value=10, step=1)
 
-    if data.empty:
-        st.warning("No data found for this ticker. Try another one.")
+if st.button("Check"):
+    st.session_state.guesses += 1
+    if guess == st.session_state.number:
+        st.success(f"🎉 Correct! You guessed it in {st.session_state.guesses} tries.")
+        # Reset game
+        st.session_state.number = random.randint(1, 10)
+        st.session_state.guesses = 0
+    elif guess < st.session_state.number:
+        st.warning("Too low! Try again.")
     else:
-        st.subheader(f"Stock Data for {ticker}")
-        st.write(data.tail())
+        st.warning("Too high! Try again.")
 
-        # --- Moving averages ---
-        data['50_MA'] = data['Close'].rolling(window=50).mean()
-        data['200_MA'] = data['Close'].rolling(window=200).mean()
-
-        # --- Plot price chart with moving averages ---
-        st.subheader("Price Chart with Moving Averages")
-        fig, ax = plt.subplots(figsize=(12,6))
-        ax.plot(data.index, data['Close'], label='Close Price', color='blue')
-        ax.plot(data.index, data['50_MA'], label='50-Day MA', color='orange')
-        ax.plot(data.index, data['200_MA'], label='200-Day MA', color='red')
-        ax.set_title(f"{ticker} Price with Moving Averages")
-        ax.legend()
-        st.pyplot(fig)
-
-        # --- Generate signal ---
-        last_signal = "Hold"
-        if data['50_MA'].iloc[-1] > data['200_MA'].iloc[-1]:
-            last_signal = "✅ Buy Signal"
-        elif data['50_MA'].iloc[-1] < data['200_MA'].iloc[-1]:
-            last_signal = "❌ Sell Signal"
-
-        st.subheader(f"Trading Signal for {ticker}: {last_signal}")
-
-        # --- Volatility (daily returns) ---
-        st.subheader("Volatility (Daily Returns)")
-        data['Daily Return'] = data['Close'].pct_change()
-        fig2, ax2 = plt.subplots(figsize=(12,6))
-        ax2.plot(data.index, data['Daily Return'], label='Daily Return', color='purple')
-        ax2.axhline(0, color='black', linewidth=1)
-        ax2.set_title(f"{ticker} Daily Volatility")
-        ax2.legend()
-        st.pyplot(fig2)
-
-except Exception as e:
-    st.error(f"Error fetching data: {e}")
 
