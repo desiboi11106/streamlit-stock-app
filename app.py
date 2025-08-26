@@ -1,28 +1,44 @@
 import streamlit as st
-import random
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
-st.title("🎲 Guess the Number Game")
+# --- Page Config ---
+st.set_page_config(page_title="Finance Dashboard", page_icon="💰", layout="wide")
 
-# Generate a random number between 1 and 10
-if "number" not in st.session_state:
-    st.session_state.number = random.randint(1, 10)
-    st.session_state.guesses = 0
+# --- Sidebar ---
+st.sidebar.title("⚙️ Controls")
+chart_type = st.sidebar.selectbox("Chart Type", ["Line", "Bar", "Area"])
+num_points = st.sidebar.slider("Number of Data Points", 10, 200, 50)
 
-st.write("I'm thinking of a number between 1 and 10. Can you guess it?")
+# --- Fake Finance Data ---
+dates = pd.date_range("2023-01-01", periods=num_points)
+prices = np.cumsum(np.random.randn(num_points)) + 100
+df = pd.DataFrame({"Date": dates, "Price": prices})
 
-# User input
-guess = st.number_input("Your guess:", min_value=1, max_value=10, step=1)
+# --- Title ---
+st.title("💹 Finance Dashboard")
+st.write("Demo app with Streamlit to show graphs and tables.")
 
-if st.button("Check"):
-    st.session_state.guesses += 1
-    if guess == st.session_state.number:
-        st.success(f"🎉 Correct! You guessed it in {st.session_state.guesses} tries.")
-        # Reset game
-        st.session_state.number = random.randint(1, 10)
-        st.session_state.guesses = 0
-    elif guess < st.session_state.number:
-        st.warning("Too low! Try again.")
-    else:
-        st.warning("Too high! Try again.")
+# --- Graph Section ---
+st.subheader("📊 Stock Prices")
+
+if chart_type == "Line":
+    st.line_chart(df.set_index("Date"))
+elif chart_type == "Bar":
+    st.bar_chart(df.set_index("Date"))
+else:
+    st.area_chart(df.set_index("Date"))
+
+# --- Matplotlib Custom Plot ---
+st.subheader("Matplotlib Plot")
+fig, ax = plt.subplots()
+ax.plot(df["Date"], df["Price"], color="royalblue", linewidth=2)
+ax.set_title("Stock Price Trend", fontsize=16, color="darkred")
+st.pyplot(fig)
+
+# --- Data Table ---
+st.subheader("📑 Raw Data")
+st.dataframe(df)
 
 
